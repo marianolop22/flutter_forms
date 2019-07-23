@@ -1,8 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_forms/src/models/product_model.dart';
 import 'package:flutter_forms/src/providers/products_provider.dart';
 import 'package:flutter_forms/src/utils/utils.dart' as utils;
-
+import 'package:image_picker/image_picker.dart';
 
 class ProductPage extends StatefulWidget {
   //const ProductPage({Key key}) : super(key: key);
@@ -18,6 +20,8 @@ class _ProductPageState extends State<ProductPage> {
   final productProvider = ProductsProvider();
   ProductModel product = new ProductModel();
   bool _saving = false;
+
+  File photo;
 
   @override
   Widget build(BuildContext context) {
@@ -35,11 +39,11 @@ class _ProductPageState extends State<ProductPage> {
         actions: <Widget>[
           IconButton(
             icon: Icon(Icons.photo_size_select_actual),
-            onPressed: (){},
+            onPressed: _selectPhoto,
           ),
           IconButton(
             icon: Icon(Icons.camera_alt),
-            onPressed: (){},
+            onPressed: _takePhoto,
           ),
         ],
       ),
@@ -50,6 +54,7 @@ class _ProductPageState extends State<ProductPage> {
             key: formKey,//identificador unico del formulario
             child: Column(
               children: <Widget>[
+                _showPhoto(),
                 _createName(),
                 _createPrice(),
                 _createAvailable(),
@@ -131,17 +136,18 @@ class _ProductPageState extends State<ProductPage> {
   }
 
 
-  void _submit(){
+  void _submit() async {
     if ( !formKey.currentState.validate() ) return;
 
     formKey.currentState.save(); //esto hace que se guarden los valores dentro de los campos
 
-    print(product.title);
-    print(product.price);
-    print(product.available);
-
     _saving = true;
     setState(() {});
+
+    if ( photo != null ) {
+      product.urlPhoto = await productProvider.uploadImage(photo);
+    }
+
 
     if ( product.id == null ) {
      productProvider.createProduct(product);
@@ -160,5 +166,45 @@ class _ProductPageState extends State<ProductPage> {
 
     scaffoldKey.currentState.showSnackBar(snackBar);
   }
+
+  Widget _showPhoto () {
+
+    if (product.urlPhoto != null ) {
+      return FadeInImage(
+        image: NetworkImage(product.urlPhoto),
+        placeholder: AssetImage('assets/jar-loading.gif'),
+        height: 300.0,
+        fit: BoxFit.cover,
+      );
+    } else {
+      return Image(
+        image: AssetImage( photo?.path ?? 'assets/no-image.png'), //el doble ?? quiere decir que si es nulo pone lo que estaá a continuación
+        height: 300.0,
+        fit: BoxFit.cover,
+      );
+    }
+  }
+
+  _selectPhoto() async{
+    _processImage ( ImageSource.gallery);
+  }
+
+  _takePhoto() async {
+
+    _processImage ( ImageSource.camera);
+  }
+
+  _processImage (ImageSource source) async {
+    photo =  await ImagePicker.pickImage(
+      source: source
+    );
+    if ( photo != null ) {
+      //limpieza de cosas
+      product.urlPhoto = null;
+    }
+    setState(() {});
+  }
+
+
   
 }

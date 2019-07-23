@@ -76,10 +76,25 @@ class HomePage extends StatelessWidget {
         ),
         color: Colors.red,
       ),
-      child: ListTile(
-        title: Text('${product.title} - ${product.price}'),
-        subtitle: Text(product.id),
-        onTap: () => Navigator.pushNamed(context, 'product', arguments: product),
+      child: Card(
+        child: Column(
+          children: <Widget>[
+            (product.urlPhoto == null)
+              ? Image( image: AssetImage('assets/no-image.png'),)
+              : FadeInImage(
+                image: NetworkImage(product.urlPhoto),
+                placeholder: AssetImage('assets/jar-loading.gif'),
+                height: 300.0,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
+            ListTile(
+              title: Text('${product.title} - ${product.price}'),
+              subtitle: Text(product.id),
+              onTap: () => Navigator.pushNamed(context, 'product', arguments: product),
+            ),
+          ],
+        ),
       ),
       onDismissed: ( direction ){
         //TODO delete product
@@ -88,5 +103,8 @@ class HomePage extends StatelessWidget {
     );
 
   }
+
+
+
 
 }
